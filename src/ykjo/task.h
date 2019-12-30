@@ -1,3 +1,5 @@
+// Copyright (c) 2019 Yongkyu Jo
+//
 #ifndef YKJO_TASK_H
 #define YKJO_TASK_H
 
