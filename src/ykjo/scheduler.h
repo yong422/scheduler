@@ -56,6 +56,24 @@ public:
 
   //  setter
 
+  //  @brief  실행되는 전체 Task 의 감시 주기를 설정 한다. (milli seconds)
+  //          10 milli seconds 가 기본값이며 그 이하는 설정 불가.
+  //          Scheduler 에 등록된 Tasks 의 주기가 짧은 경우 실시간 체크를 위해서는 짧은 시간을 설정. (리소스 사용량이 올라감)
+  //          Tasks 에 설정된 실행 주기가 길 경우 해당 값을 500ms 이상으로 설정하여 리소스 낭비를 제거.
+  void set_scheduling_cycle(const uint32_t& scheduling_cycle) noexcept {
+    if (kMimimumSchedulingCycle <= scheduling_cycle) {
+      scheduling_cycle_ = scheduling_cycle;
+    }
+  }
+
+  //  @brief  실행되는 개별 Task 의 감시 타임아웃을 설정 한다. (milli seconds)
+  //          1 milli seconds 가 기본값이며 그 이하는 설정 불가.
+  void set_wait_time_for_async_task(const uint32_t& wait_time_for_async_task) noexcept {
+    if (kMimimumWaitTimeForAsyncTask <= wait_time_for_async_task) {
+      wait_time_for_async_task_ = wait_time_for_async_task;
+    }
+  }
+
   //  @brief  실행되는 Task 의 최대 실행시간 검증을 위한 시간값 설정(secs)
   //          0 이 기본값이며, 0 으로 설정 된 경우 실행시간은 제한이 없다.
   void set_maxmimum_execution_time(const uint32_t& maxmimum_execution_time) noexcept { 
@@ -78,7 +96,10 @@ public:
 
   //  @biref  Scheduler 에 등록된 Task 의 정상적인 실행시간의 최대값.
   //          해당 값이 설정된 경우, 해당 값을 기준을 초과하는 경우 오류메시지를 발생 시킨다.
-  uint32_t maxmimum_execution_time() const { return maxmimum_execution_time_; }
+  uint32_t maxmimum_execution_time()  const { return maxmimum_execution_time_; }
+
+  uint32_t scheduling_cycle()         const { return scheduling_cycle_; }
+  uint32_t wait_time_for_async_task() const { return wait_time_for_async_task_; }
 
   uint32_t GetAllTasksCount() const;
   uint32_t GetRunningTasksCount() const;
@@ -89,11 +110,20 @@ private:
   //          등록된 Task 를 이용하여 Periodic job 을 수행한다.
   void Run();
 
+public:
+  static const uint32_t                                                           kMimimumSchedulingCycle       = 10;
+  static const uint32_t                                                           kMimimumWaitTimeForAsyncTask  = 1;
+
 private:
   //  Scheduler 내부 오류 발생시 오류 메시지 처리를 위한 callback function
   std::function< void(const std::string&) >                                       failure_callback_;
   // 등록된 Task 의 최대 실행시간을 확인한다.
   uint32_t                                                                        maxmimum_execution_time_ = 0;
+  // 등록 및 실행중인 Task 의 감시 주기이며 해당 시간을 기준으로
+  // 대기중인 Task 의 실행 가능 여부, 비동기 실행중인 Task 의 종료 여부를 확인 하는 시간 값 (milli seconds)
+  uint32_t                                                                        scheduling_cycle_ = kMimimumSchedulingCycle;
+  // 비동기로 동작되는 Task 의 종료여부를 확인하기 위해 대기하는 시간 값 (milli seconds)
+  uint32_t                                                                        wait_time_for_async_task_ = kMimimumWaitTimeForAsyncTask;
   //  Scheduler thread 의 stop signal 전달을 위한 promise
   std::promise<void>                                                              exit_signal_;
   //  Scheduler thread 의 stop 처리를 위한 future class

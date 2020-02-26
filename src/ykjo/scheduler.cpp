@@ -145,7 +145,7 @@ void Scheduler::Run()
     mutex_.unlock();
     for (auto it = running_tasks_.begin(); it != running_tasks_.end();) {
       //  비동기로 실행중인 Task 에 대하여 완료 여부 확인
-      if (it->second.wait_for(std::chrono::microseconds(1)) == std::future_status::ready) {
+      if (it->second.wait_for(std::chrono::microseconds(wait_time_for_async_task())) == std::future_status::ready) {
         //  Task 가 완료된 경우 종료 시간을 설정한 후 Task 의 대기열에 추가
         it->first->set_end_time(std::time(nullptr));
         it->first->set_flag_generated_maxtime(false);
@@ -165,7 +165,7 @@ void Scheduler::Run()
         ++it;
       }
     }
-    if (main_future_.wait_for(std::chrono::microseconds(10)) == std::future_status::ready) break;
+    if (main_future_.wait_for(std::chrono::microseconds(scheduling_cycle())) == std::future_status::ready) break;
   }
 }
 
